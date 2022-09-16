@@ -1,6 +1,6 @@
 #include "../lib/include/cub3D.h"
 
-int	ext_of_map(char *argv)
+int	ext_of_map(char *argv) //не обрабатывает 123, т.е. не ссуществующий файл без расширения
 {
 	int		i;
 	int		j;
@@ -67,72 +67,88 @@ void	read_map(char *filepath, t_info *info) //  todo: сделать обра�
 	close(fd);
 }
 
-void	check_chars_of_map(t_info *info, int *player, int *exits) //todo: добавить обработку енеми и т.п.
-{
-	int	l;
-	int	c;
+// void	check_chars_of_map(t_info *info, int *player, int *exits) //todo: добавить обработку енеми и т.п.
+// {
+// 	int	l;
+// 	int	c;
 
-	l = 0;
-	*player = 0;
-	*exits = 0;
-	while (l < info->height)
-	{
-		c = 0;
-		while (c < info->width)
-		{
-			if (info->map[l][c] == 'N' || info->map[l][c] == 'W' || info->map[l][c] == 'E' || info->map[l][c] == 'S')
-				++*player;
-			else if (info->map[l][c] != '1' && info->map[l][c] != '0')
-				handler_errors_of_map("Map have \"garbage\" simbols!!!", info);
-			c++;
-		}
-		l++;
-	}
-}
+// 	l = 0;
+// 	*player = 0;
+// 	*exits = 0;
+// 	while (l < info->height)
+// 	{
+// 		c = 0;
+// 		while (c < info->width)
+// 		{
+// 			if (info->map[l][c] == 'N' || info->map[l][c] == 'W' || info->map[l][c] == 'E' || info->map[l][c] == 'S')
+// 				++*player;
+// 			else if (info->map[l][c] != '1' && info->map[l][c] != '0')
+// 				handler_errors_of_map("Map have \"garbage\" simbols!!!", info);
+// 			c++;
+// 		}
+// 		l++;
+// 	}
+// }
 
-void	check_walls(t_info *info)
-{
-	int	line;
-	int	column;
+// void	check_walls(t_info *info)
+// {
+// 	int	line;
+// 	int	column;
 
-	line = 0;
-	column = 0;
-	while (line < info->height)
-	{
-		if (line == 0 || line == info->height - 1)
-		{
-			column = 0;
-			while (info->map[line][column] != '\n' && info->map[line][column])
-			{
-				if (info->map[line][column] != '1')
-					handler_errors_of_map \
-					("The map is not surrounded by walls!!!", info);
-				column++;
-			}
-		}
-		else if (info->map[line][0] != '1'\
-		|| info->map[line][info->width - 1] != '1')
-			handler_errors_of_map("The map is not surrounded by walls!!!", \
-			info);
-		line++;
-	}
-}
+// 	line = 0;
+// 	column = 0;
+// 	while (line < info->height)
+// 	{
+// 		if (line == 0 || line == info->height - 1)
+// 		{
+// 			column = 0;
+// 			while (info->map[line][column] != '\n' && info->map[line][column])
+// 			{
+// 				if (info->map[line][column] != '1')
+// 					handler_errors_of_map \
+// 					("The map is not surrounded by walls!!!", info);
+// 				column++;
+// 			}
+// 		}
+// 		else if (info->map[line][0] != '1'\
+// 		|| info->map[line][info->width - 1] != '1')
+// 			handler_errors_of_map("The map is not surrounded by walls!!!", \
+// 			info);
+// 		line++;
+// 	}
+// }
 
-void	get_textures(char *filepath, t_txrs *txrs) 
+void	get_textures(char *filepath, t_info *info) 
 //  todo: сделать обработку букв вест и т.п. а также добавить пропуск переноса строки
 {
 	int fd;
+	char *line;
 
 	fd = open(filepath, O_RDONLY);
 	if (fd < 0)
 		handler_errors(2);
-	txrs->north = get_next_line(fd);
-	txrs->south = get_next_line(fd);
-	txrs->west = get_next_line(fd);
-	txrs->north = get_next_line(fd);
-	txrs->floor = get_next_line(fd);
-	txrs->ceilling = get_next_line(fd);
-	close(fd);
+	line = get_next_line(fd);
+	while (line[0] != '1' || line[0] != '0')
+	{
+		info->txrs = (char **)malloc(sizeof(char *) * (info->height + 1));
+		printf("%s", line);
+		if (line[0] == 'N')
+			info->txrs->north = "qwe";
+		else if (line[0] == 'S')
+			info->txrs->south = line;
+		else if (line[0] == 'W')
+			info->txrs->west = line;
+		else if (line[0] == 'E')
+			info->txrs->east = line;
+		else if (line[0] == 'F')
+			info->txrs->floor = line;
+		else if (line[0] == 'C')
+			info->txrs->ceilling = line;
+		if (info->txrs->north == NULL || info->txrs->south == NULL || info->txrs->west == NULL || info->txrs->east == NULL || info->txrs->floor == NULL || info->txrs->ceilling == NULL)
+			line = get_next_line(fd);
+		else
+			return;
+	}
 }
 
 get_width(t_info *info)
@@ -145,15 +161,14 @@ void	parse_map(char *filepath, t_info *info)
 {
 	int	player;
 	int	exits;
-	t_txrs	txrs;
 
 	if (!ext_of_map(filepath))
 		handler_errors(3);
-	get_textures(filepath, &txrs);
-	read_map(filepath, info);
-	check_chars_of_map(info, &player, &exits);
-	get_width(info);
-	if (player != 1)
-		handler_errors_of_map("In MapFile must be only one player!!!", info);
+	get_textures(filepath, info);
+	// read_map(filepath, info);
+	// check_chars_of_map(info, &player, &exits);
+	// get_width(info);
+	// if (player != 1)
+	// 	handler_errors_of_map("In MapFile must be only one player!!!", info);
 	// check_walls(info);
 }

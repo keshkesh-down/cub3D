@@ -23,6 +23,16 @@ typedef struct s_exit_coordinates
 	int	y;
 }	t_exit_coordinates;
 
+typedef struct s_txrs
+{
+	char	*north;
+	char	*south;
+	char	*west;
+	char	*east;
+	char	*floor;
+	char	*ceilling;
+}	t_txrs;
+
 typedef struct s_info
 {
 	void				*mlx;
@@ -33,17 +43,8 @@ typedef struct s_info
 	char				**map;
 	int					x;
 	int					y;
+	t_txrs				*txrs;
 }	t_info;
-
-typedef struct s_txrs
-{
-	char	*north;
-	char	*south;
-	char	*west;
-	char	*east;
-	char	*floor;
-	char	*ceilling;
-}	t_txrs;
 
 void	parse_map(char *filename, t_info *info);
 void	handler_errors(int number_of_error);
